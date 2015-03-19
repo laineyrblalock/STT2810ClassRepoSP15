@@ -1,0 +1,126 @@
+---
+title: "The relationship between getting pregnant, getting STDs and getting AIDs."
+author: ""
+date: "Spring 2015"
+output: html_document
+---
+
+```{r, echo = FALSE, message = FALSE}
+knitr::opts_chunk$set(comment = NA, message = FALSE, warning = FALSE, fig.align = "center")
+library(ggplot2)
+library(descr)
+```
+##Purpose of Study:
+ The present study will examine young adults from the National Longitudinal Study of Adolescent Health (AddHealth). The goals of the analysis will include 1) establishing the relationship between teen pregnancy and contraception; and 2) determining whether or not there is a correlation between teen pregnancy and abortion.
+
+##Variables:
+Three categorical variables relevant to *teen pregnancy* are `H1RP1-H1RP6` from the `AddHealth` data set.  The `AddHealth` data set is loaded from the `PDS` package.  Using the `dplyr` package, a new data frame `NDF` containing only three variables after renaming `H1RP1-H1RP6` to `GettingPregnant`, `SexuallyTransmittedDiseases`, and `AIDs` is created.
+
+
+```{r}
+library(PDS)
+library(dplyr)
+NDF <- AddHealth %>%
+  rename(GettingPregnant= H1RP1, SexuallyTransmittedDiseases = H1RP4, AIDs = H1RP3) %>%
+  select(GettingPregnant, SexuallyTransmittedDiseases, AIDs)
+head(NDF)
+```
+
+Responses of `9` for question `GettingPregnant` are recoded to `NA`. 
+
+```{r}
+xtabs(~GettingPregnant, data = NDF)
+NDF$GettingPregnant[NDF$GettingPregnant == 9] <- NA
+xtabs(~GettingPregnant, data = NDF)
+NDF$GettingPregnant <- factor(NDF$GettingPregnant, labels = c("Strongly Agree", "Agree", "Neither agree nor disagree", "Disagree","Strongly Disagreed","Refused", "Legitimate Skip" ,"Don't know"))[, drop = TRUE]
+xtabs(~GettingPregnant, data = NDF)
+summary(NDF$GettingPregnant)
+ggplot(data = NDF, aes(x = GettingPregnant, fill = GettingPregnant)) + 
+  geom_bar() + 
+  labs(title ="Is getting pregnant,at this point in your life,\n one of the worst things that\n could happen to you?", x = "") +
+  theme_bw() +  theme(axis.text.x  = element_text(angle = 85, vjust = 0.5)) +
+  guides(fill = guide_legend(title = "Getting Pregnant\nWorst thing\nIn your Life?"))
+```
+
+This graph shows the survey of those who agree versus disagree that getting pregnant can be one of the worst things that happen to them. 
+
+
+
+Question `SexuallyTransmittedDiseases` asks therespondents "Would it be a big hassle to protect yourself from STDs?"  Responses of 9 are recoded to `NA`.
+
+```{r}
+xtabs(~SexuallyTransmittedDiseases, data = NDF)
+NDF$SexuallyTransmittedDiseases[NDF$SexuallyTransmittedDiseases==9] <- NA
+xtabs(~SexuallyTransmittedDiseases, data = NDF)
+NDF$SexuallyTransmittedDiseases <- factor(NDF$SexuallyTransmittedDiseases)[, drop = TRUE]
+xtabs(~SexuallyTransmittedDiseases, data = NDF)
+NDF$SexuallyTransmittedDiseases <- factor(NDF$SexuallyTransmittedDiseases, labels = c("Strongly Agree", "Agree", "Neither Agree nor Disagree", "Disagree", "Strongly Disagree", "refused","Legitimate skip", "don't know"))
+```
+
+
+
+```{r}
+summary(NDF$SexuallyTransmittedDiseases)
+xtabs(~SexuallyTransmittedDiseases, data = NDF)
+NAS <- sum(xtabs(~SexuallyTransmittedDiseases, data = NDF)[2:5]) 
+NAS
+```
+
+```{r}
+ggplot(data = na.omit(NDF[ , "SexuallyTransmittedDiseases", drop = FALSE]), 
+       aes(x = SexuallyTransmittedDiseases, fill = SexuallyTransmittedDiseases)) + 
+  geom_bar() + 
+  labs(title = "Would it be a big hassle to protect yourself from STDs?", x = "") +
+  theme_bw() + theme(axis.text.x  = element_text(angle = 85, vjust = 0.5))+
+  guides(fill = guide_legend(title = "Hassle to protect\nFrom STDs"))
+```
+This survey displays whether the participants agree or disagree that it would be hard to protect themselves against STDs.
+
+
+
+Question `AIDs` asks "What is the chance that you would get the AIDs virus?"  A response of 9 should be recoded to `NA`.
+
+```{r}
+NDF$AIDs[NDF$AIDs == 9] <- NA
+New <-table(cut(as.numeric(NDF$AIDs),breaks=c(0,2,4,6,9)))
+barplot(New)
+New1<-as.factor(New)
+
+
+
+NDF$AIDs <- factor(NDF$AIDs, labels = c("Almost no", "Some", "Half & half ","good", "Almost certain", "Refused", "Legitimate Skip","Don't Know"))[, drop = TRUE]
+xtabs(~AIDs, data = NDF)
+ggplot(data = na.omit(NDF[ , "AIDs", drop = FALSE]), aes(x = AIDs, fill =AIDs)) + 
+  geom_bar()  +
+  labs(title = "What is the chance that you would get the AIDs virus?", x = "") +
+  theme_bw() +   theme(axis.text.x  = element_text(angle = 85, vjust = 0.5)) +
+  guides(fill = guide_legend(title = "Chance\ngetting AIDs virus"))
+```
+This graph displays the chances of the participants getting the AIDs virus.
+```{r}
+g1 <- ggplot(data = NDF, aes(x = GettingPregnant, fill = SexuallyTransmittedDiseases)) +
+  geom_bar(position = "fill") + 
+  theme_bw()
+g1
+g1 +
+  labs(x = "", y = "", title = "Is Getting Pregnant the worst thing that could happen to you? versus Risk for STDs ") + 
+  scale_fill_discrete(name="Risk for getting STDs") 
+g2 <- ggplot(data = na.omit(NDF), aes(x = GettingPregnant, fill = SexuallyTransmittedDiseases)) + 
+  geom_bar(position = "fill") + 
+  theme_bw() + theme(axis.text.x  = element_text(angle = 85, vjust = 0.5))
+g2
+g2 + labs(x = "", y = "", title = "Is Getting Pregnant the worst thing\n that could happen to you?\n versus Risk for STDs ") + 
+  scale_fill_discrete(name="Risk for getting STDs") 
+```
+
+This graph shows two variables and compares getting pregnant being the worst thing versus the risk of STDs.
+
+```{r}
+g3 <- g2 + facet_grid(AIDs~ .) +
+  theme(axis.text.x  = element_text(angle = 85, vjust = 0.5)) +
+  labs(x = "", y = "", title = "Is Getting Pregnant the worst thing \n that could happen to you? \n versus Risk for STDs \n versus Risk for getting AIDs") + 
+  scale_fill_discrete(name="Risk for getting STDs")
+ g3
+```
+
+The variables listed to the right show no chance or a chance of getting AIDs. The x axis displays the chance of getting STDs. The y axis displays chances of getting pregnant.
